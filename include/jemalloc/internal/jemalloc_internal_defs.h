@@ -2,6 +2,34 @@
 #include <sys/cdefs.h>
 #if !defined(__BIONIC__)
 #include "jemalloc_internal_defs_host.h"
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) || __has_feature(hwaddress_sanitizer) || \
+    __has_feature(memory_sanitizer) || __has_feature(thread_sanitizer)
+#define JEMALLOC_HOST_SANITIZED
+#endif
+#endif
+#if defined(__SANITIZE_ADDRESS__) || defined(__SANITIZE_THREAD__)
+#define JEMALLOC_HOST_SANITIZED
+#endif
+#ifdef JEMALLOC_HOST_SANITIZED
+/*
+ * Sanitizers provide their own malloc, and crash if it is replaced. Keep
+ * jemalloc's functions prefixed with "je_", so that linking libjemalloc5 into
+ * a sanitized host binary leaves the sanitizer's malloc in place.
+ */
+#undef JEMALLOC_IS_MALLOC
+#undef JEMALLOC_OVERRIDE___LIBC_CALLOC
+#undef JEMALLOC_OVERRIDE___LIBC_FREE
+#undef JEMALLOC_OVERRIDE___LIBC_MALLOC
+#undef JEMALLOC_OVERRIDE___LIBC_MEMALIGN
+#undef JEMALLOC_OVERRIDE___LIBC_REALLOC
+#undef JEMALLOC_OVERRIDE___LIBC_VALLOC
+#undef JEMALLOC_GLIBC_MALLOC_HOOK
+#undef JEMALLOC_GLIBC_MEMALIGN_HOOK
+#ifndef JEMALLOC_NO_RENAME
+#define JEMALLOC_NO_RENAME
+#endif
+#endif
 #else
 /* include/jemalloc/internal/jemalloc_internal_defs.h.  Generated from jemalloc_internal_defs.h.in by configure.  */
 #ifndef JEMALLOC_INTERNAL_DEFS_H_
